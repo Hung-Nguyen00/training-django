@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import os
 import environ
+from datetime import timedelta
 from .logging import LOGGING
+from .swagger import SWAGGER_SETTINGS  # noqa
 
 env = environ.Env()
 env.read_env()
@@ -50,21 +52,32 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     'django_extensions',
+    
     'rest_framework',
+    "rest_framework.authtoken",
+    "oauth2_provider",
+    "rest_auth",
+    
     'storages',
     'corsheaders',
     'djangoql',
     'post_office',
+    
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'crispy_forms',
+    
+    'rest_framework_swagger',
+    'drf_yasg',
 ]
 
 PROJECT_APPS = [
     'usermodel',
-    'core'
+    'core',
+    'product',
+    'cart'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -77,9 +90,20 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'oauth2_provider.middleware.OAuth2TokenMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'user_auth.authentication.CustomJWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
+}
 
 TEMPLATES = [
     {
@@ -93,6 +117,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries': {
+                'staticfiles': 'django.templatetags.static', 
+            }
         },
     },
 ]
@@ -103,6 +130,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 AUTH_USER_MODEL = 'usermodel.User'
 
 AUTHENTICATION_BACKENDS = [
+     'oauth2_provider.backends.OAuth2Backend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
@@ -121,6 +149,15 @@ DATABASES = {
 }
 #Site matching query does not exist
 SITE_ID = 1
+
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD_EMAIL = "email"
+ACCOUNT_AUTHENTICATION_METHOD_USERNAME = "username"
+ACCOUNT_EMAIL_VERIFICATION_MANDATORY = "mandatory"
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -275,3 +312,32 @@ POST_OFFICE = {
 AWS_SES_REGION_NAME = env('AWS_SES_REGION_NAME', default='us-east-1')
 AWS_SES_REGION_ENDPOINT = env('AWS_SES_REGION_ENDPOINT', default='email.us-east-1.amazonaws.com')
 AWS_SES_CONFIGURATION_SET = env('AWS_SES_CONFIGURATION_SET', default=None)
+
+
+EXPIRED_TOKEN_MINUTES = env.int("EXPIRED_TOKEN_MINUTES", default=100)
+EXPIRED_REFRESH_DAYS = env.int("EXPIRED_REFRESH_DAYS", default=30)
+
+
+# JWT PUBLIC/PRIVATE KEY PATH
+JWT_PUBLIC_KEY_PATH = env.str("JWT_PUBLIC_KEY_PATH", default="jwt_api_key.pub")
+JWT_PRIVATE_KEY_PATH = env.str("JWT_PRIVATE_KEY_PATH", default="jwt_api_key")
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=EXPIRED_TOKEN_MINUTES),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=EXPIRED_REFRESH_DAYS),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "RS256",
+    "SIGNING_KEY": open(JWT_PRIVATE_KEY_PATH).read(),
+    "VERIFYING_KEY": open(JWT_PUBLIC_KEY_PATH).read(),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "id",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+}
+
