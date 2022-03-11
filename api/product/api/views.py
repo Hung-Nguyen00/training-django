@@ -1,9 +1,9 @@
-from itertools import product
-from tkinter import Image
+from re import X
 from product.models import Product, Color, Category, Images
 from product.api.serializers import ProductSerializer, ColorSerializer, CategorySerializer, ProductImageSerializer
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
+from product.services.product import update_color_product
 
 class ProductView(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
@@ -12,12 +12,6 @@ class ProductView(viewsets.ModelViewSet):
     
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
-    def create(self, request,  *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ColorView(viewsets.ModelViewSet):
@@ -27,7 +21,8 @@ class ColorView(viewsets.ModelViewSet):
 
 class CategoryView(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
-    queryset = Category.objects.all()
+    queryset = Category.objects.filter(parent_id__isnull=True)
+    
     
     # def create(self, request):
     #     title = request.data.get('title')
@@ -57,3 +52,5 @@ class ProductImagesView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
