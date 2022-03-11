@@ -71,11 +71,10 @@ class Product(TimeStampedModel, SoftDeletableModel):
     
     
 class Images(TimeStampedModel, SoftDeletableModel):
-    name = models.CharField(max_length=100, blank=True, null=True)
     file_path = models.ImageField(upload_to='images')
     thumbnail_path = models.ImageField(upload_to='images')
     user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, blank=True, null=True, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name="product_images",blank=True, null=True, on_delete=models.CASCADE)
     
     class Meta:
         indexes = [
@@ -88,13 +87,14 @@ class Images(TimeStampedModel, SoftDeletableModel):
     def save(self, *args, **kwargs):
         if not self.id:
             self.thumbnail_path = self.compressImage(self.thumbnail_path)
+            self.file_path = self.compressImage(self.file_path)
         super(Images, self).save(*args, **kwargs)
         
     def compressImage(self,uploadedImage):
         imageTemporary = Image.open(uploadedImage)
         outputIoStream = BytesIO()
-        imageTemporaryResized = imageTemporary.resize((1020,573)) 
-        imageTemporary.save(outputIoStream , format='JPEG', quality=60)
+        imageTemporaryResized = imageTemporary.resize((444, 444)) 
+        imageTemporaryResized.save(outputIoStream , format='JPEG', quality=60)
         outputIoStream.seek(0)
         uploadedImage = InMemoryUploadedFile(
             outputIoStream,'ImageField', "%s.jpg" % uploadedImage.name.split('.')[0], 'image/jpeg', sys.getsizeof(outputIoStream), None

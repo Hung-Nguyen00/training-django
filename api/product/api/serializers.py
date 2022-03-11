@@ -13,26 +13,57 @@ class ColorSerializer(serializers.ModelSerializer):
         model = Color
         fields = ("id", "code", "name")
         
-
-class CategorySerializer(serializers.ModelSerializer):
-    slug = serializers.SlugField(read_only=True)
-    title = serializers.CharField(required=True)
+        
+class CategorySimplifiedSerializer(serializers.ModelSerializer):
+    sub_category = serializers.SerializerMethodField()
     
     class Meta:
         model = Category
-        fields = ("id", "title", "slug", "parent_id")        
+        fields = "__all__"
+        
+    @classmethod    
+    def get_sub_category(cls, obj):
+        sub_category = []
+        if obj.sub_category.exists():
+            for sub in obj.sub_category.all():
+                serializer = CategorySimplifiedSerializer(sub)
+                sub_category.append(serializer.data)
+        return sub_category
+        
+                
+
+class CategorySerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
+    title = serializers.CharField(required=True, validators=[UniqueValidator(queryset=Category.objects.all())])
+    sub_category = serializers.SerializerMethodField()
+    parent_id = serializers.PrimaryKeyRelatedField(write_only=True, queryset=Category.objects.all())
+    
+    class Meta:
+        model = Category
+        fields = ("id", "title", "slug", "sub_category", "parent_id")
+        
+    @classmethod    
+    def get_sub_category(cls, obj):
+        sub_category = []
+        if obj.sub_category.exists():
+            for sub in obj.sub_category.all():
+                serializer = CategorySerializer(sub)
+                sub_category.append(serializer.data)
+        return sub_category  
         
         
-class ImageSerializer(serializers.ModelSerializer):
+class ProductImageSerializer(serializers.ModelSerializer):
+    thumbnail_path = serializers.ImageField(required=True)
+    product_id = serializers.PrimaryKeyRelatedField(required=True, write_only=True, source="product", queryset=Product.objects.all())
     
     class Meta:
         model = Images
-        fields = ("id", "name", "file_path", "thumbnail_path")        
+        fields = ("id", "file_path", "thumbnail_path", "product_id")        
         
         
 class ProductSerializer(serializers.ModelSerializer):
+    product_images = ProductImageSerializer(many=True, read_only=True)
     product_color = ColorSerializer(many=True, read_only=True)
-    images = ImageSerializer(many=True, read_only=True)
     slug = serializers.SlugField(read_only=True)
     name = serializers.CharField(max_length=100, required=True)
     code = serializers.CharField(max_length=50, required=True, validators=[UniqueValidator(queryset=Product.objects.all())])
@@ -54,7 +85,7 @@ class ProductSerializer(serializers.ModelSerializer):
                   "amount",
                   "is_active",
                   "is_top",
-                  "images",
+                  "product_images",
                   "product_color"
         )
     
