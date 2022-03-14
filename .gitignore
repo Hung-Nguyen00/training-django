@@ -2,7 +2,10 @@ env/
 venv/
 .idea
 .env
-
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+api/config/media/*
 **/__pycache__/
 
 .DS_Store
