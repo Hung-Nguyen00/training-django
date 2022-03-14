@@ -71,6 +71,10 @@ THIRD_PARTY_APPS = [
     
     'rest_framework_swagger',
     'drf_yasg',
+    'django_filters',
+    
+    "django_celery_beat",
+    "django_celery_results",
 ]
 
 PROJECT_APPS = [
@@ -102,7 +106,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 TEMPLATES = [
@@ -157,6 +162,14 @@ ACCOUNT_AUTHENTICATION_METHOD_EMAIL = "email"
 ACCOUNT_AUTHENTICATION_METHOD_USERNAME = "username"
 ACCOUNT_EMAIL_VERIFICATION_MANDATORY = "mandatory"
 
+#celery -A core worker -P eventlet -c 10
+#celery -A core beat
+#  Celery
+BROKER_URL = env("CELERY_BROKER_URL", default="django://")
+CELERYD_MAX_TASKS_PER_CHILD = 100
+CELERYD_TASK_SOFT_TIME_LIMIT = 2400  # 40 minutes
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_IGNORE_RESULT = False
 
 
 # Password validation

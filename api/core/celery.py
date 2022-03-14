@@ -1,31 +1,48 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-from api.config.settings import CELERY_BROKER_URL
+
 from celery import Celery
-from kombu import Queue
+from django.conf import settings
+
+
+# # Init logstash
+# def initialize_logstash(logger=None, loglevel=logging.INFO, **kwargs):
+#     handler = logstash.TCPLogstashHandler(
+#         settings.IP_LOGSTASH,
+#         settings.PORT_LOGSTASH,
+#         tags=["celery-logstash"],
+#         message_type="celery",
+#         version=1,
+#     )
+#     handler.setLevel(loglevel)
+#     logger.addHandler(handler)
+#     return logger
+
+
+# # Logstash
+# after_setup_task_logger.connect(initialize_logstash)
+# after_setup_logger.connect(initialize_logstash)
 
 # set the default Django settings module for the 'celery' program.
-# this is also used in manage.py
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.config.settings.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.settings")
+app = Celery("api.core")
 
+app.conf.ONCE = {
+    "backend": "celery_once.backends.Redis",
+    "settings": {"url": settings.BROKER_URL, "default_timeout": 60 * 60},
+}
 
-app = Celery("sk-softchecker-v3")
-
-# Using a string here means the worker don't have to serialize
+# Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
 app.config_from_object("django.conf:settings", namespace="CELERY")
-app.conf.ONCE = {
-  'backend': 'celery_once.backends.Redis',
-  'settings': {
-    'url': CELERY_BROKER_URL,
-    'default_timeout': 60 * 1
-  }
-}
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
-app.conf.broker_url = CELERY_BROKER_URL
+
+@app.task(bind=True)
+def debug_task(self):
+    print("Celery Request: {0!r}".format(self.request))

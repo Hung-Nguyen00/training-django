@@ -58,26 +58,29 @@ class ProductSerializer(serializers.ModelSerializer):
     slug    = serializers.SlugField(read_only=True)
     name    = serializers.CharField(max_length=100, required=True)
     code    = serializers.CharField(max_length=50, required=True, validators=[UniqueValidator(queryset=Product.objects.all())])
-    price   = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
+    buying_price   = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
+    selling_price  = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
     amount  = serializers.IntegerField(min_value=1, default=1)
     is_active = serializers.BooleanField(default=True)
     is_top    = serializers.BooleanField(default=False)
     
     class Meta:
         model = Product
-        fields = ("id", 
-                  "code",
-                  "slug",
-                  "name",
-                  "description",
-                  "content",
-                  "price",
-                  "amount",
-                  "is_active",
-                  "is_top",
-                  "product_images",
-                  "color_ids",
-                  "product_color",
+        fields = (
+            "id", 
+            "code",
+            "slug",
+            "name",
+            "description",
+            "content",
+            "buying_price",
+            "amount",
+            "selling_price",
+            "is_active",
+            "is_top",
+            "product_images",
+            "color_ids",
+            "product_color",
         )
     
     # @classmethod

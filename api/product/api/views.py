@@ -4,11 +4,20 @@ from product.api.serializers import ProductSerializer, ColorSerializer, Category
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from product.services.product import update_color_product
+from rest_framework import filters
+import django_filters.rest_framework as django_filters
+
+
 
 class ProductView(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
     ordering_fields = '__all__'
+    filter_backends = [django_filters.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['buying_price', 'selling_price']
+    search_fields = ['code', 'name']
+    ordering_fields = "__all__"
+    
     
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)

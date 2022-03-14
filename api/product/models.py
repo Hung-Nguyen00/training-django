@@ -46,7 +46,8 @@ class Product(TimeStampedModel, SoftDeletableModel):
     description = models.TextField(blank=True, null=True)
     content = models.TextField(blank=True, null=True)
     
-    price = models.DecimalField(default=0, decimal_places=3, max_digits=10)
+    buying_price = models.DecimalField(default=0, decimal_places=3, max_digits=10)
+    selling_price = models.DecimalField(default=0, decimal_places=3, max_digits=10)
     amount = models.PositiveIntegerField(default=0, null=True, blank=True)
     discount = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
 
@@ -100,7 +101,11 @@ class Images(TimeStampedModel, SoftDeletableModel):
             outputIoStream,'ImageField', "%s.jpg" % uploadedImage.name.split('.')[0], 'image/jpeg', sys.getsizeof(outputIoStream), None
         )
         return uploadedImage
-        
+    
+    def delete(self):
+        self.thumbnail_path.storage.delete(self.thumbnail_path.name)
+        self.file_path.storage.delete(self.file_path.name)
+        super().delete()
         
 class ProductColor(TimeStampedModel, SoftDeletableModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_color")
