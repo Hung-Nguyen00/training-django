@@ -4,7 +4,6 @@ from django.utils.text import slugify
 from model_utils.models import TimeStampedModel, SoftDeletableModel
 from usermodel.models import User
 from PIL import Image
-from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
