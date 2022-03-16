@@ -93,7 +93,9 @@ class ProductSerializer(serializers.ModelSerializer):
     
     @classmethod
     def get_product_color(cls, obj):
-        return [{"id": it.color.id, "name": it.color.name} for it in obj.product_color.all()]
+        if hasattr(obj, "product_color"):
+            return [{"id": it.color.id, "name": it.color.name} for it in obj.product_color.all()]
+        return []
     
     @transaction.atomic
     def update(self, instance, validated_data):

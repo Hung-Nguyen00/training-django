@@ -3,7 +3,7 @@ from enum import Enum
 
 class OrderStatus(str, Enum):
     APPROVED    = "Approved"
-    IS_SHIPPING = "Is shipping"
+    IS_SHOPPING = "Is shopping"
     CANCELLED   = "Cancelled"
     DONE        = "Done"
     REFUNDED    = "Refunded"

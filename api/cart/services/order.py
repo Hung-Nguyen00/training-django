@@ -20,6 +20,6 @@ class OrderService:
         return code, True     
     
     def create_order_if_not_exists(self):
-        order, created = Order.objects.get_or_create(user=self.user, status=OrderStatus.IS_SHIPPING, defaults={})
+        order, created = Order.objects.get_or_create(user=self.user, status=OrderStatus.IS_SHOPPING, defaults={})
         return order
     
