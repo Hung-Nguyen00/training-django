@@ -3,6 +3,10 @@ from rest_framework import generics, status, serializers
 from cart.api.serializers import OrderSerializer, OrderProductSerializer
 from cart.enums import OrderStatus
 from rest_framework.response import Response
+from product.exceptions import ProductDoesNotExistException
+from cart.services.order import OrderService
+from django.db import transaction
+
 
 class OrderProductView(generics.ListCreateAPIView):
     serializer_class = OrderProductSerializer
@@ -22,7 +26,7 @@ class UpdateOrderProductView(generics.RetrieveUpdateDestroyAPIView):
         try:
             order_detail = OrderProduct.objects.get(order=order, product_id=product_id)
         except OrderProduct.DoesNotExist:
-            raise serializers.ValidationError({"error": "This product does not exist"})
+            raise ProductDoesNotExistException()
         return order_detail
     
     def update(self, request, *args, **kwargs):
@@ -37,10 +41,24 @@ class UpdateOrderProductView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
         
         
-class OrderListView(generics.RetrieveAPIView):
+class OrderRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = OrderSerializer
     queryset = Order.objects.all().order_by("order_details__created")
     
     def get_object(self):
         return Order.objects.filter(user=self.request.user, status=OrderStatus.IS_SHOPPING).first()
-        
+
+    @transaction.atomic
+    def patch(self, request, *args, **kwargs):
+        order = self.get_object()
+        order_service = OrderService(request.user)
+        code, checked = order_service.create_code()
+        data = request.data
+        data["code"] = code
+        data["status"] = OrderStatus.ORDERED.value
+        data.pop("products")
+        serializer = OrderSerializer(instance=order, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        order_service.transfer_products_not_buy_to_new_order(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

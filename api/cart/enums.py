@@ -5,6 +5,7 @@ class OrderStatus(str, Enum):
     APPROVED    = "Approved"
     IS_SHOPPING = "Is shopping"
     CANCELLED   = "Cancelled"
+    ORDERED     = "Ordered"
     DONE        = "Done"
     REFUNDED    = "Refunded"
 

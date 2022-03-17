@@ -40,7 +40,7 @@ class OrderProduct(TimeStampedModel, SoftDeletableModel):
     is_buying = models.BooleanField(default=False, null=True)
 
     def __str__(self):
-        return self.total
+        return str(self.total)
 
     def save(self, *args, **kwargs):
         self.total = self.price * self.amount
