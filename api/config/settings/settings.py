@@ -81,7 +81,8 @@ PROJECT_APPS = [
     'usermodel',
     'core',
     'product',
-    'cart'
+    'cart',
+    'notification'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -110,10 +111,12 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
+TEMPLATES_ROOT = str(ROOT_DIR("templates"))
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [TEMPLATES_ROOT],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -161,6 +164,10 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD_EMAIL = "email"
 ACCOUNT_AUTHENTICATION_METHOD_USERNAME = "username"
 ACCOUNT_EMAIL_VERIFICATION_MANDATORY = "mandatory"
+
+
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 
 #celery -A core worker -P eventlet -c 10
 #celery -A core beat
@@ -331,6 +338,24 @@ AWS_SES_REGION_NAME = env('AWS_SES_REGION_NAME', default='us-east-1')
 AWS_SES_REGION_ENDPOINT = env('AWS_SES_REGION_ENDPOINT', default='email.us-east-1.amazonaws.com')
 AWS_SES_CONFIGURATION_SET = env('AWS_SES_CONFIGURATION_SET', default=None)
 
+#mail
+SENDGRID_API_KEY = env("SENDGRID_API_KEY", default="")
+ACCOUNT_EMAIL_VERIFICATION = env("ACCOUNT_EMAIL_VERIFICATION", default="none")
+EMAIL_BACKEND = env(
+    "DJANGO_EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.mailtrap.io")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=None)
+ACCOUNT_EMAIL_SUBJECT_PREFIX = env("ACCOUNT_EMAIL_SUBJECT_PREFIX", default="")
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = env.int("EMAIL_CONFIRMATION_EXPIRE_DAYS", default=3)
+#FRONTEND_URL
+FRONTEND_URL= env("FRONTEND_URL", default="http://localhost")
 
 EXPIRED_TOKEN_MINUTES = env.int("EXPIRED_TOKEN_MINUTES", default=100)
 EXPIRED_REFRESH_DAYS = env.int("EXPIRED_REFRESH_DAYS", default=30)

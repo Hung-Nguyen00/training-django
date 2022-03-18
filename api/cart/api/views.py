@@ -3,9 +3,10 @@ from rest_framework import generics, status, serializers
 from cart.api.serializers import OrderSerializer, OrderProductSerializer
 from cart.enums import OrderStatus
 from rest_framework.response import Response
-from product.exceptions import ProductDoesNotExistException
+from product.exceptions import ProductDoesNotExistException, ThereAreNotAnyProductToOrderException
 from cart.services.order import OrderService
 from django.db import transaction
+from cart.services.send_mail import OrderEmailService
 
 
 class OrderProductView(generics.ListCreateAPIView):
@@ -51,6 +52,8 @@ class OrderRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     @transaction.atomic
     def patch(self, request, *args, **kwargs):
         order = self.get_object()
+        if not order.order_details.exists():
+            raise ThereAreNotAnyProductToOrderException()
         order_service = OrderService(request.user)
         code, checked = order_service.create_code()
         data = request.data
@@ -61,4 +64,5 @@ class OrderRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         order_service.transfer_products_not_buy_to_new_order(order)
+        OrderEmailService.send_mail_to_admin_when_user_ordered(order_id=order.id)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
