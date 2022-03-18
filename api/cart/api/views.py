@@ -52,7 +52,7 @@ class OrderRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     @transaction.atomic
     def patch(self, request, *args, **kwargs):
         order = self.get_object()
-        if not order.order_details.exists():
+        if not order.order_details.filter(is_buying=True).exists():
             raise ThereAreNotAnyProductToOrderException()
         order_service = OrderService(request.user)
         code, checked = order_service.create_code()
