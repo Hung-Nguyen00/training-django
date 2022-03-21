@@ -6,8 +6,7 @@ from rest_framework.response import Response
 from product.exceptions import ProductDoesNotExistException, ThereAreNotAnyProductToOrderException
 from cart.services.order import OrderService
 from django.db import transaction
-from cart.services.send_mail import OrderEmailService
-
+from cart.signals import dispatch_sending_email
 
 class OrderProductView(generics.ListCreateAPIView):
     serializer_class = OrderProductSerializer
@@ -52,17 +51,20 @@ class OrderRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     @transaction.atomic
     def patch(self, request, *args, **kwargs):
         order = self.get_object()
-        if not order.order_details.filter(is_buying=True).exists():
+        data = request.data
+        products = data.pop("products")
+        product_ids = [product.get("product_id") for product in products]
+        product_order = order.order_details.values_list("product_id", flat=True)
+        if not set(product_ids).issubset(product_order) or len(products) == 0:
             raise ThereAreNotAnyProductToOrderException()
         order_service = OrderService(request.user)
         code, checked = order_service.create_code()
-        data = request.data
         data["code"] = code
         data["status"] = OrderStatus.ORDERED.value
-        data.pop("products")
         serializer = OrderSerializer(instance=order, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        order_service.transfer_products_not_buy_to_new_order(order)
-        OrderEmailService.send_mail_to_admin_when_user_ordered(order_id=order.id)
+        
+        order_service.transfer_products_not_buy_to_new_order(order, list_products=products)
+        dispatch_sending_email.send(sender=Order, order=order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -5,7 +5,6 @@ import os
 from celery import Celery
 from django.conf import settings
 
-
 # # Init logstash
 # def initialize_logstash(logger=None, loglevel=logging.INFO, **kwargs):
 #     handler = logstash.TCPLogstashHandler(

@@ -9,6 +9,7 @@ def create_or_update_order_product(order: Order, validated_data):
     
     product = Product.objects.get(id=product_id)
     total = product.selling_price * amount
+    print(total)
     order_details, created = OrderProduct.objects.update_or_create(order=order, product=product, defaults={
         "total" : total, "amount" : amount, "price": product.selling_price, "is_buying": is_buying
     })

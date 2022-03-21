@@ -1,3 +1,4 @@
+from typing import Dict
 from usermodel.models import User
 from cart.models import Order, OrderProduct
 from product.models import Product
@@ -25,24 +26,29 @@ class OrderService:
         return order
     
     # transfer products which not bought by user to a new order after User ordered
-    def transfer_products_not_buy_to_new_order(self, order: Order):
+    def transfer_products_not_buy_to_new_order(self, order: Order, list_products: list[Dict]):
         order_product = OrderProduct.objects.filter(order=order)
-        ordered_product = order_product.filter(is_buying=True).values("product_id", "amount")
-        not_order_product = order_product.filter(is_buying=False)
-        product_ids = [details["product_id"] for details in ordered_product]
+        product_ids = [int(product["product_id"]) for product in list_products]
         products = Product.objects.filter(id__in=product_ids)
         
+        for product in list_products:
+            for op in order_product:
+                if op.product_id == product["product_id"]:
+                    op.amount = product["amount"]
+                    op.is_buying = True
+                    break
+            for p in products:
+                if product["product_id"] == p.id:
+                    p.amount= p.amount - product["amount"]
+                    break
+        OrderProduct.objects.bulk_update(order_product, fields=["is_buying", "amount"])
+        Product.objects.bulk_update(products, fields=["amount"])
+        
+        not_order_product = OrderProduct.objects.filter(order=order, is_buying=False)
         new_order = self.create_order_if_not_exists()
         #transfer products was bought into new order
         not_order_product.update(order=new_order)
         
-        for details in ordered_product:
-            for product in products:
-                if details["product_id"] == product.id:
-                    product.amount= product.amount - details["amount"]
-                    break
-                    
-        Product.objects.bulk_update(products, fields=["amount"])
         return order_product
         
     

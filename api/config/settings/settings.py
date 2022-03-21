@@ -172,12 +172,12 @@ SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 #celery -A core worker -P eventlet -c 10
 #celery -A core beat
 #  Celery
+REDIS_CONN_URL = env.str("REDIS_CONN_URL", default="redis://localhost:6379")
 BROKER_URL = env("CELERY_BROKER_URL", default="django://")
 CELERYD_MAX_TASKS_PER_CHILD = 100
 CELERYD_TASK_SOFT_TIME_LIMIT = 2400  # 40 minutes
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_IGNORE_RESULT = False
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

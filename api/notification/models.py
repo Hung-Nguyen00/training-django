@@ -4,7 +4,6 @@ from typing import Optional
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
@@ -65,7 +64,7 @@ class Message(TimeStampedModel, SoftDeletableModel):
         choices=choices.MESSAGE_STATUS_CHOICES,
         default=choices.MESSAGE_STATUS_QUEUED,
     )
-    payload = JSONField(null=True, blank=True)
+    payload = models.JSONField(null=True, blank=True)
     sent_date = models.DateTimeField(null=True, blank=True)
     read = models.BooleanField(default=False)
     visible = models.BooleanField(default=True, help_text="Visible to user?")
