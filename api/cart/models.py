@@ -19,7 +19,7 @@ class Order(TimeStampedModel, SoftDeletableModel):
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=0, default=0, null=True, blank=True)
 
     def __str__(self):
-        return self.code
+        return str(self.code)
 
     def save(self, *args, **kwargs):
         total = self.order_details.aggregate(total_money=Sum("total", filter=F("is_buying") == True))['total_money']

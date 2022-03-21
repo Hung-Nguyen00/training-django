@@ -35,13 +35,14 @@ class OrderService:
             for op in order_product:
                 if op.product_id == product["product_id"]:
                     op.amount = product["amount"]
+                    op.total = op.amount * op.price
                     op.is_buying = True
                     break
             for p in products:
                 if product["product_id"] == p.id:
                     p.amount= p.amount - product["amount"]
                     break
-        OrderProduct.objects.bulk_update(order_product, fields=["is_buying", "amount"])
+        OrderProduct.objects.bulk_update(order_product, fields=["is_buying", "amount", "total"])
         Product.objects.bulk_update(products, fields=["amount"])
         
         not_order_product = OrderProduct.objects.filter(order=order, is_buying=False)

@@ -11,6 +11,8 @@ from logging import Logger
 from os import path
 from random import randint
 from typing import Optional
+from django.utils.safestring import mark_safe
+from django.urls import reverse
 
 import boto3
 import pytz
@@ -158,7 +160,8 @@ def random_string():
     chars_fixed = string.ascii_letters + string.digits
     min_size_pass = 8
     max_size_pass = 16
-    username = "".join(random.choice(chars_fixed) for x in range(random.randint(min_size_pass, max_size_pass)))
+    username = "".join(random.choice(chars_fixed)
+                       for x in range(random.randint(min_size_pass, max_size_pass)))
     return username
 
 
@@ -219,3 +222,9 @@ def mkdir_with_current_date(file_path: str) -> str:
     p = f"{file_path}/{d}"
     mkdir(p)
     return p
+
+
+def mark_safe_url(pk, url_name, showing_name):
+    return mark_safe('<a href="{}">{}</a>'.format(
+        reverse(url_name, args=(pk,)), showing_name
+    ))

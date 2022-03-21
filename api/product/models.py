@@ -9,25 +9,35 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 
 # Create your models here.
 
+
 class Category(TimeStampedModel, SoftDeletableModel):
     title = models.CharField(max_length=50, blank=True, null=True)
     slug = models.SlugField()
-    parent_id = models.ForeignKey('self', related_name='sub_category', on_delete=models.SET_NULL, blank=True, null=True)
+    parent_id = models.ForeignKey(
+        'self', related_name='sub_category', on_delete=models.SET_NULL, blank=True, null=True)
     is_show = models.BooleanField(default=True)
-        
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["title"]),
+        ]
+        ordering = ["title"]
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+
     def save(self, *args, **kwargs):
         if not self.id:
             self.slug = slugify(self.title)
         super(Category, self).save(*args, **kwargs)
-        
+
     def get_sub_category(self):
         return self.sub_category
-        
-    
+
+
 class Color(TimeStampedModel, SoftDeletableModel):
     code = models.CharField(max_length=50, blank=True, null=True, unique=True)
     name = models.CharField(max_length=100, blank=True, null=True)
-    
+
     class Meta:
         indexes = [
             models.Index(fields=["name"]),
@@ -35,25 +45,29 @@ class Color(TimeStampedModel, SoftDeletableModel):
 
         verbose_name = "Color"
         verbose_name_plural = "Colors"
-        
+
 
 class Product(TimeStampedModel, SoftDeletableModel):
     code = models.CharField(max_length=50, unique=True, db_index=True)
     name = models.CharField(max_length=100, blank=True, null=True)
     slug = models.CharField(max_length=150, blank=True, null=True)
-    
+
     description = models.TextField(blank=True, null=True)
     content = models.TextField(blank=True, null=True)
-    
-    buying_price = models.DecimalField(default=0, decimal_places=3, max_digits=10)
-    selling_price = models.DecimalField(default=0, decimal_places=3, max_digits=10)
+
+    buying_price = models.DecimalField(
+        default=0, decimal_places=3, max_digits=10)
+    selling_price = models.DecimalField(
+        default=0, decimal_places=3, max_digits=10)
     amount = models.PositiveIntegerField(default=0, null=True, blank=True)
-    discount = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+    discount = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_top = models.BooleanField(default=False)
-    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
-    
+    user = models.ForeignKey(
+        User, blank=True, null=True, on_delete=models.CASCADE)
+
     class Meta:
         indexes = [
             models.Index(fields=["user"]),
@@ -62,20 +76,21 @@ class Product(TimeStampedModel, SoftDeletableModel):
         ]
         verbose_name = "Product"
         verbose_name_plural = "Products"
-    
+
     def save(self, *args, **kwargs):
         if not self.id:
             self.slug = slugify(self.name)
         super(Product, self).save(*args, **kwargs)
-    
-    
-    
+
+
 class Images(TimeStampedModel, SoftDeletableModel):
     file_path = models.ImageField(upload_to='images')
     thumbnail_path = models.ImageField(upload_to='images')
-    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, related_name="product_images",blank=True, null=True, on_delete=models.CASCADE)
-    
+    user = models.ForeignKey(
+        User, blank=True, null=True, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product, related_name="product_images", blank=True, null=True, on_delete=models.CASCADE)
+
     class Meta:
         indexes = [
             models.Index(fields=["user"]),
@@ -83,36 +98,41 @@ class Images(TimeStampedModel, SoftDeletableModel):
         ]
         verbose_name = "Images"
         verbose_name_plural = "Images"
-        
+
     def save(self, *args, **kwargs):
         if not self.id:
             self.thumbnail_path = self.compressImage(self.thumbnail_path)
             self.file_path = self.compressImage(self.file_path)
         super(Images, self).save(*args, **kwargs)
-        
-    def compressImage(self,uploadedImage):
+
+    def compressImage(self, uploadedImage):
         imageTemporary = Image.open(uploadedImage)
         outputIoStream = BytesIO()
-        imageTemporaryResized = imageTemporary.resize((444, 444)) 
-        imageTemporaryResized.save(outputIoStream , format='JPEG', quality=60)
+        imageTemporaryResized = imageTemporary.resize((444, 444))
+        imageTemporaryResized.save(outputIoStream, format='JPEG', quality=60)
         outputIoStream.seek(0)
         uploadedImage = InMemoryUploadedFile(
-            outputIoStream,'ImageField', "%s.jpg" % uploadedImage.name.split('.')[0], 'image/jpeg', sys.getsizeof(outputIoStream), None
+            outputIoStream, 'ImageField', "%s.jpg" % uploadedImage.name.split(
+                '.')[0], 'image/jpeg', sys.getsizeof(outputIoStream), None
         )
         return uploadedImage
-    
+
     def delete(self):
         self.thumbnail_path.storage.delete(self.thumbnail_path.name)
         self.file_path.storage.delete(self.file_path.name)
         super().delete()
-        
+
+
 class ProductColor(TimeStampedModel, SoftDeletableModel):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_color")
-    color = models.ForeignKey(Color, on_delete=models.CASCADE, related_name="color_product")
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="product_color")
+    color = models.ForeignKey(
+        Color, on_delete=models.CASCADE, related_name="color_product")
     amount = models.PositiveIntegerField(default=0, null=True, blank=True)
-    
-    
+
+
 class ProductCategory(TimeStampedModel, SoftDeletableModel):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_category")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="category_product")
-    
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="product_category")
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, related_name="category_product")
