@@ -1,7 +1,7 @@
 from django.contrib import admin
 from product.models import Product, Color, Category, Images, ProductCategory, ProductColor
 from django.utils.safestring import mark_safe
-from django.urls import reverse   
+from django.urls import reverse
 # Register your models here.
 
 
@@ -17,7 +17,7 @@ class ProductAdmin(admin.ModelAdmin):
         "is_active"
     )
     search_fields = ("name", "is_active", "buying_price", "selling_price")
-
+    
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -50,20 +50,23 @@ class ProductColorAdmin(admin.ModelAdmin):
     def product_name(self, obj):
         if obj.product:
             return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:product_product_change", args=(obj.product.pk,)),
-            obj.product.name
-        ))
+                reverse("admin:product_product_change",
+                        args=(obj.product.pk,)),
+                obj.product.name
+            ))
         return ""
 
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
     list_display = ("id", "product", "category")
-    
+    raw_id_fields = ("product", )
+
     def product_name(self, obj):
         if obj.product:
             return mark_safe('<a href="{}">{}</a>'.format(
-            reverse("admin:product_product_change", args=(obj.product.pk,)),
-            obj.product.name
-        ))
+                reverse("admin:product_product_change",
+                        args=(obj.product.pk,)),
+                obj.product.name
+            ))
         return ""

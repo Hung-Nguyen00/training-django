@@ -25,6 +25,9 @@ class Category(TimeStampedModel, SoftDeletableModel):
         verbose_name = "Category"
         verbose_name_plural = "Categories"
 
+    def __str__(self):
+        return self.title
+
     def save(self, *args, **kwargs):
         if not self.id:
             self.slug = slugify(self.title)
@@ -46,6 +49,9 @@ class Color(TimeStampedModel, SoftDeletableModel):
         verbose_name = "Color"
         verbose_name_plural = "Colors"
 
+    def __str__(self):
+        return self.name
+    
 
 class Product(TimeStampedModel, SoftDeletableModel):
     code = models.CharField(max_length=50, unique=True, db_index=True)
@@ -77,6 +83,9 @@ class Product(TimeStampedModel, SoftDeletableModel):
         verbose_name = "Product"
         verbose_name_plural = "Products"
 
+    def __str__(self):
+        return self.code
+    
     def save(self, *args, **kwargs):
         if not self.id:
             self.slug = slugify(self.name)

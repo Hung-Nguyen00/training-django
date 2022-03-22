@@ -5,6 +5,5 @@ from django.contrib.redirects.models import Redirect
 # Register your models here.
 
 
-admin.site.unregister(Group)
 admin.site.unregister(Site)
 admin.site.unregister(Redirect)
