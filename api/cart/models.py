@@ -20,6 +20,10 @@ class Order(TimeStampedModel, SoftDeletableModel):
     total = models.DecimalField(max_digits=10, decimal_places=0, default=0, null=True, blank=True)
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=0, default=0, null=True, blank=True)
 
+    @property
+    def products(self):
+        return [detail.product.name for detail in self.order_details.all()]
+
     def save(self, *args, **kwargs):
         total = self.order_details.aggregate(total_money=Sum("total", filter=F("is_buying") == True))['total_money']
         self.total = total if total else 0
@@ -44,6 +48,8 @@ class OrderProduct(TimeStampedModel, SoftDeletableModel):
     def save(self, *args, **kwargs):
         self.total = self.price * self.amount
         super(OrderProduct, self).save(*args, **kwargs)
+        
+   
 
 
 class CsvLog(TimeStampedModel, SoftDeletableModel):
