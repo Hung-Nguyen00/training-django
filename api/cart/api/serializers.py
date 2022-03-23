@@ -2,13 +2,13 @@ from os import read
 from rest_framework import serializers
 from cart.models import Order, OrderProduct
 from product.models import Product
-from cart.enums import OrderStatus
 from django.db.models import Sum
 from cart.services.order import OrderService
 from product.api.serializers import ProductSerializer
 from product.exceptions import QuantityOfProductExceedException
 from django.db import transaction
 from cart.services.function_handler import create_or_update_order_product
+from cart.models import CsvLog
 
 
         
@@ -90,4 +90,11 @@ class OrderSerializer(serializers.ModelSerializer):
         if total_money:
             return total_money
         return 0
-    
+
+
+class CsvLogSerializer(serializers.ModelSerializer):
+    download_url = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = CsvLog
+        fields = "__all__"

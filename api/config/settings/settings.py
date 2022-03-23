@@ -178,8 +178,10 @@ REDIS_CONN_URL = env.str("REDIS_CONN_URL", default="redis://localhost:6379")
 BROKER_URL = env("CELERY_BROKER_URL", default="django://")
 CELERYD_MAX_TASKS_PER_CHILD = 100
 CELERYD_TASK_SOFT_TIME_LIMIT = 2400  # 40 minutes
-CELERY_RESULT_BACKEND = "django-db"
+CELERY_RESULT_BACKEND =  env("CELERY_BROKER_URL", default="django://")
+CELERY_RESULT_CONTENT = ["application/json"]
 CELERY_IGNORE_RESULT = False
+CELERY_ACCEPT_CONTENT = ["json", "pickle"]
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

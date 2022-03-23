@@ -1,6 +1,7 @@
-from cart.models import Order, OrderProduct
-from rest_framework import generics, status, serializers
-from cart.api.serializers import OrderSerializer, OrderProductSerializer
+import re
+from cart.models import Order, OrderProduct, CsvLog
+from rest_framework import generics, status, serializers, viewsets
+from cart.api.serializers import OrderSerializer, OrderProductSerializer, CsvLogSerializer
 from cart.enums import OrderStatus
 from rest_framework.response import Response
 from product.exceptions import ProductDoesNotExistException, ThereAreNotAnyProductToOrderException
@@ -10,7 +11,8 @@ from cart.signals import dispatch_sending_email
 from cart.permissions import IsOwnerOrder
 from rest_framework import filters
 import django_filters.rest_framework as django_filters
-
+from cart.services.export_csv import create_export_csv_log
+from cart.signals import dispatch_downloaded_csv
 
 class OrderProductView(generics.ListCreateAPIView):
     serializer_class = OrderProductSerializer
@@ -29,8 +31,7 @@ class OrderListView(generics.ListAPIView):
     filter_backends = [django_filters.DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["code", "created"]
-    filter_fields = ["total"]
-
+    
 
 class UpdateOrderProductView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = OrderProductSerializer
@@ -88,3 +89,23 @@ class OrderRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             order, list_products=products)
         dispatch_sending_email.send(sender=Order, order=order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class OrderFilterListView(viewsets.GenericViewSet):
+    queryset = Order.objects.all()
+    filter_backends = [django_filters.DjangoFilterBackend,
+                       filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["code", "created"]
+
+
+
+class OrderExportCSV(OrderFilterListView):
+    serializer_class = CsvLogSerializer
+
+    @transaction.atomic
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        csv_log = create_export_csv_log(user=request.user, query_set=queryset)
+        serializer = CsvLogSerializer(csv_log)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
